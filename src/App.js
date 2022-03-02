@@ -6,85 +6,86 @@ import { render } from '@testing-library/react';
 
 function App() {
 
-  const [isFiltered, setIsFiltered] = useState(false);
-  const categoriesFilter = [];
+    //todo: like / dislike | Delete function | Multifilter | Paging
 
-  function splice (tab) {
-    for (var i = 0 ; i <= tab.length + 1; i++) {
-      for(var j = i + 1 ; j <= tab.length + 1; j++){
-        if(tab[i] == tab[j]) {
-          tab.splice(i , 1);
-        }
-      }
-    }
+
+  const category = ['All', 'Comedy', 'Animation', 'Drame', 'Thriller']
+  const [allMovies, setAllMovies] = useState([])
+  const [saveMovies, setSaveMovies] = useState([])
+  const [isFiltered, setIsFiltered] = useState(true);
+  const [pages, setPages] = useState({
+    nbItems : 8,
+    currentPage : 1,
+    nbPages : 3
+  });
+
+  const getMovies = async () => {
+    const getAllMovies = await movies.movies$ //? get all movies
+    setAllMovies(getAllMovies) //? save all movies 
+    setSaveMovies(getAllMovies) //? save all movies in other array for reset filter
   }
 
-  function handleClick() {
-    console.log(this);
-    setIsFiltered(true);
-    try {
-      categoriesFilter.push(this);
-    } catch (error) {
-      console.log(error)
+  const filterMovies = (category) => {
+    if (category !== 'All') {
+      const filteredMovies = saveMovies.filter((movie) => movie.category === category) //? get all movies with the category selected
+      return setAllMovies(filteredMovies)
     }
-    console.log(categoriesFilter)
+    return setAllMovies(saveMovies)
   }
-  
+
   useEffect(() => {
-    async function display() {
-      var items = await movies.movies$;
-      var categories = [];
-     
-      items.map(item => (
-        categories.push(item.category)
-      ))
-      splice(categories);
-      console.log(items);
-      console.log("Catégories : " + categories);
-
-      render(
-        <div className = "wrapper">
-        <p>Filtrer par catégories :{categories.map(e => (
-          <button onClick={handleClick.bind(e)}>{e}</button>
-        ))}</p>
-        
-        {isFiltered ? 
-        items.map(item => (
-          <div className="map">
-            <li key={item.title}>
-              <h1>{item.title}</h1>
-              <p>{item.category}</p>
-              <p>{item.likes} Likes</p>
-              <p>{item.dislikes} Dislikes</p>
-              <button>Aimer</button>
-              <button>Supprimer</button>
-            </li>
-          </div>
-        ))
-        : items.map(item => (
-          <div className="map">
-            <li key={item.title}>
-              <h1>{item.title}</h1>
-              <p>{item.category}</p>
-              <p>{item.likes} Likes</p>
-              <p>{item.dislikes} Dislikes</p>
-              <button>Aimer</button>
-            </li>
-          </div>
-        ))}
-        </div>
-        
-      );
-      
-    }    
-    display();
+    getMovies()
   }, []);
 
+  function handlePaging() {
+    console.log(this)
+    setPages(prevstate => ({
+      nbItems : this,
+      ...prevstate,
+    }));
+    console.log(pages.nbItems)
+  }
 
   return (
     <div className="App">
-        <h1>Bonjour</h1>
-        
+      <h1>Bonjour</h1>
+      <div className="wrapper">
+        <p>Filtrer par catégories : {category.map((item, index) => (
+          <button key={index} onClick={() => filterMovies(item)}>{item}</button>
+        ))}</p>
+        {allMovies.length > 0 ?
+          allMovies.map((item, index) => {
+            return (
+              <div className="map" key={index}>
+                <li key={item.title}>
+                  <h1>{item.title}</h1>
+                  <p>{item.category}</p>
+                  <p>{item.likes} Likes</p>
+                  <p>{item.dislikes} Dislikes</p>
+                  <button>Aimer</button>
+                </li>
+              </div>
+            )
+          })
+          :
+          <p>Aucun film</p>
+        }
+      </div>
+      <div>
+          <button>Page précédente</button>
+          <button>Page Suivante</button>
+          <p>Nombre d'éléments à afficher : 
+          {[4, 8, 12].map(buttonId => (
+              <button
+                key={buttonId}
+                value={buttonId}
+                onClick={handlePaging.bind(buttonId)}
+              >
+                 {buttonId}
+              </button>
+            ))}
+          </p>
+        </div>
     </div>
   );
 }
